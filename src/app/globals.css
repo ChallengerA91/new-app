@@ -1,0 +1,139 @@
+@import "tailwindcss";
+
+@theme {
+  --color-neon-cyan: #00f0ff;
+  --color-neon-magenta: #ff00e5;
+  --color-neon-green: #39ff14;
+  --color-neon-orange: #ff6b00;
+  --color-neon-yellow: #ffe600;
+  --color-hud-bg: #0a0e1a;
+  --color-hud-panel: #111827;
+  --color-hud-border: #1e3a5f;
+  --color-hud-border-glow: #00f0ff40;
+}
+
+/* Scanline overlay for CRT feel */
+@keyframes scanline {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(100vh); }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes flicker {
+  0%, 100% { opacity: 1; }
+  92% { opacity: 1; }
+  93% { opacity: 0.8; }
+  94% { opacity: 1; }
+  96% { opacity: 0.9; }
+  97% { opacity: 1; }
+}
+
+@keyframes data-stream {
+  0% { background-position: 0% 0%; }
+  100% { background-position: 0% 100%; }
+}
+
+@keyframes bar-fill {
+  from { width: 0%; }
+}
+
+@keyframes fade-in-row {
+  from { opacity: 0; transform: translateX(-10px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+body {
+  background-color: #0a0e1a;
+  color: #e0e0e0;
+  font-family: 'Segoe UI', 'Consolas', monospace;
+}
+
+/* Glowing text utility */
+.text-glow-cyan {
+  text-shadow: 0 0 7px #00f0ff, 0 0 20px #00f0ff80, 0 0 40px #00f0ff40;
+}
+
+.text-glow-magenta {
+  text-shadow: 0 0 7px #ff00e5, 0 0 20px #ff00e580, 0 0 40px #ff00e540;
+}
+
+.text-glow-green {
+  text-shadow: 0 0 7px #39ff14, 0 0 20px #39ff1480;
+}
+
+.text-glow-orange {
+  text-shadow: 0 0 7px #ff6b00, 0 0 20px #ff6b0080;
+}
+
+/* HUD panel */
+.hud-panel {
+  background: linear-gradient(135deg, #111827 0%, #0d1525 100%);
+  border: 1px solid #1e3a5f;
+  box-shadow: 0 0 15px #00f0ff15, inset 0 0 30px #00000080;
+  position: relative;
+}
+
+.hud-panel::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, #00f0ff60, transparent);
+}
+
+/* Scanline effect (subtle) */
+.scanline-overlay::after {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  background: rgba(0, 240, 255, 0.03);
+  animation: scanline 8s linear infinite;
+  pointer-events: none;
+  z-index: 100;
+}
+
+/* Similarity bar */
+.similarity-bar {
+  animation: bar-fill 0.8s ease-out forwards;
+}
+
+/* Table row entrance */
+.comp-row {
+  animation: fade-in-row 0.4s ease-out forwards;
+  opacity: 0;
+}
+
+/* Input glow on focus */
+.input-hud:focus {
+  box-shadow: 0 0 0 2px #00f0ff40, 0 0 20px #00f0ff20;
+  border-color: #00f0ff;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #0a0e1a;
+}
+::-webkit-scrollbar-thumb {
+  background: #1e3a5f;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #00f0ff60;
+}
