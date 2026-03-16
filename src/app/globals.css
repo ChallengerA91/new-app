@@ -137,3 +137,73 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: #00f0ff60;
 }
+
+/* ============ LIGHT MODE ============ */
+.light-mode body {
+  background-color: #f5f7fa;
+  color: #1a1a2e;
+}
+
+.light-mode .hud-panel {
+  background: linear-gradient(135deg, #ffffff 0%, #f0f4f8 100%);
+  border: 1px solid #d1d9e6;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+}
+
+.light-mode .hud-panel::before {
+  background: linear-gradient(90deg, transparent, #0077b640, transparent);
+}
+
+.light-mode .text-white {
+  color: #1a1a2e !important;
+}
+
+.light-mode .text-gray-300 {
+  color: #4a5568 !important;
+}
+
+.light-mode .text-gray-400 {
+  color: #718096 !important;
+}
+
+.light-mode .text-gray-500 {
+  color: #a0aec0 !important;
+}
+
+.light-mode .text-gray-600 {
+  color: #718096 !important;
+}
+
+.light-mode .text-gray-700 {
+  color: #4a5568 !important;
+}
+
+.light-mode .scanline-overlay::after {
+  display: none;
+}
+
+.light-mode ::-webkit-scrollbar-track {
+  background: #f5f7fa;
+}
+
+.light-mode ::-webkit-scrollbar-thumb {
+  background: #cbd5e0;
+}
+
+.light-mode .bg-hud-bg,
+.light-mode select,
+.light-mode input[type="number"] {
+  background-color: #f5f7fa !important;
+  border-color: #d1d9e6 !important;
+  color: #1a1a2e !important;
+}
+
+/* Leaflet popup overrides for light mode */
+.light-mode .leaflet-popup-content-wrapper {
+  background: #ffffff;
+  color: #1a1a2e;
+}
+
+.light-mode .leaflet-popup-tip {
+  background: #ffffff;
+}

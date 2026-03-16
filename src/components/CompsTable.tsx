@@ -1,15 +1,14 @@
 "use client";
 
+import { useState } from "react";
 import { Property } from "@/data/mock-ntreis";
 
-interface Comp extends Property {
+export interface Comp extends Property {
   distance: number;
   similarityScore: number;
 }
 
 function SimilarityBar({ score }: { score: number }) {
-  // Convert score to a percentage (lower score = higher match)
-  // Scores typically range 0-100, we invert so best matches show fuller bars
   const pct = Math.max(0, Math.min(100, 100 - score));
   const color =
     pct >= 75
@@ -54,7 +53,73 @@ function StatusBadge({ status }: { status: string }) {
   );
 }
 
-export default function CompsTable({ comps }: { comps: Comp[] }) {
+function exportToCSV(comps: Comp[]) {
+  const headers = ["#", "Address", "City", "State", "Zip", "Beds", "Baths", "Sq Ft", "Type", "Rent", "$/SqFt", "Distance (mi)", "Status", "Match %"];
+  const rows = comps.map((c, i) => [
+    i + 1,
+    c.address,
+    c.city,
+    c.state,
+    c.zip,
+    c.beds,
+    c.baths,
+    c.sqft,
+    c.propertyType,
+    c.rentPrice,
+    (c.rentPrice / c.sqft).toFixed(2),
+    c.distance,
+    c.status,
+    Math.max(0, Math.min(100, 100 - c.similarityScore)).toFixed(0) + "%",
+  ]);
+  const csv = [headers, ...rows].map((r) => r.map((v) => `"${v}"`).join(",")).join("\n");
+  const blob = new Blob([csv], { type: "text/csv" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "rental-comps.csv";
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+export default function CompsTable({
+  comps,
+  selectedComps,
+  onToggleSelect,
+  onViewDetail,
+}: {
+  comps: Comp[];
+  selectedComps?: string[];
+  onToggleSelect?: (mlsId: string) => void;
+  onViewDetail?: (comp: Comp) => void;
+}) {
+  const [sortField, setSortField] = useState<string>("similarity");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
+
+  function handleSort(field: string) {
+    if (sortField === field) {
+      setSortDir(sortDir === "asc" ? "desc" : "asc");
+    } else {
+      setSortField(field);
+      setSortDir("asc");
+    }
+  }
+
+  const sorted = [...comps].sort((a, b) => {
+    const dir = sortDir === "asc" ? 1 : -1;
+    switch (sortField) {
+      case "rent": return (a.rentPrice - b.rentPrice) * dir;
+      case "sqft": return (a.sqft - b.sqft) * dir;
+      case "distance": return (a.distance - b.distance) * dir;
+      case "ppsf": return (a.rentPrice / a.sqft - b.rentPrice / b.sqft) * dir;
+      case "similarity": return (a.similarityScore - b.similarityScore) * dir;
+      default: return 0;
+    }
+  });
+
+  const SortIcon = ({ field }: { field: string }) => (
+    <span className="ml-1 opacity-50">{sortField === field ? (sortDir === "asc" ? "▲" : "▼") : ""}</span>
+  );
+
   return (
     <div
       className="hud-panel rounded-xl mt-6 overflow-hidden"
@@ -76,9 +141,22 @@ export default function CompsTable({ comps }: { comps: Comp[] }) {
             Comparable Rentals // Top {comps.length} Matches
           </span>
         </div>
-        <span className="text-[10px] text-gray-600 tracking-wider">
-          SORTED BY SIMILARITY
-        </span>
+        <div className="flex items-center gap-3">
+          {selectedComps && selectedComps.length > 0 && (
+            <span className="text-[10px] text-neon-cyan tracking-wider">
+              {selectedComps.length} SELECTED
+            </span>
+          )}
+          <button
+            onClick={() => exportToCSV(comps)}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] tracking-wider uppercase border border-neon-cyan/30 text-neon-cyan rounded hover:bg-neon-cyan/10 transition-colors cursor-pointer"
+          >
+            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path d="M12 5v14M5 12l7 7 7-7" />
+            </svg>
+            Export CSV
+          </button>
+        </div>
       </div>
 
       {/* Table */}
@@ -86,24 +164,36 @@ export default function CompsTable({ comps }: { comps: Comp[] }) {
         <table className="w-full text-sm">
           <thead>
             <tr className="text-[10px] tracking-[0.2em] text-gray-500 uppercase border-b border-hud-border/50">
+              {onToggleSelect && <th className="px-3 py-3 w-8"></th>}
               <th className="text-left px-6 py-3 font-medium">#</th>
               <th className="text-left px-4 py-3 font-medium">Address</th>
               <th className="text-center px-4 py-3 font-medium">BD/BA</th>
-              <th className="text-right px-4 py-3 font-medium">Sq Ft</th>
+              <th className="text-right px-4 py-3 font-medium cursor-pointer hover:text-neon-cyan transition-colors" onClick={() => handleSort("sqft")}>Sq Ft<SortIcon field="sqft" /></th>
               <th className="text-left px-4 py-3 font-medium">Type</th>
-              <th className="text-right px-4 py-3 font-medium">Rent</th>
-              <th className="text-right px-4 py-3 font-medium">Dist</th>
+              <th className="text-right px-4 py-3 font-medium cursor-pointer hover:text-neon-cyan transition-colors" onClick={() => handleSort("rent")}>Rent<SortIcon field="rent" /></th>
+              <th className="text-right px-4 py-3 font-medium cursor-pointer hover:text-neon-cyan transition-colors" onClick={() => handleSort("ppsf")}>$/SqFt<SortIcon field="ppsf" /></th>
+              <th className="text-right px-4 py-3 font-medium cursor-pointer hover:text-neon-cyan transition-colors" onClick={() => handleSort("distance")}>Dist<SortIcon field="distance" /></th>
               <th className="text-center px-4 py-3 font-medium">Status</th>
-              <th className="text-left px-4 py-3 font-medium">Match</th>
+              <th className="text-left px-4 py-3 font-medium cursor-pointer hover:text-neon-cyan transition-colors" onClick={() => handleSort("similarity")}>Match<SortIcon field="similarity" /></th>
             </tr>
           </thead>
           <tbody>
-            {comps.map((comp, i) => (
+            {sorted.map((comp, i) => (
               <tr
                 key={comp.mlsId}
-                className="comp-row border-b border-hud-border/20 hover:bg-neon-cyan/5 transition-colors"
+                className={`comp-row border-b border-hud-border/20 hover:bg-neon-cyan/5 transition-colors ${selectedComps?.includes(comp.mlsId) ? "bg-neon-cyan/10" : ""}`}
                 style={{ animationDelay: `${i * 80}ms` }}
               >
+                {onToggleSelect && (
+                  <td className="px-3 py-3">
+                    <input
+                      type="checkbox"
+                      checked={selectedComps?.includes(comp.mlsId) ?? false}
+                      onChange={() => onToggleSelect(comp.mlsId)}
+                      className="accent-neon-cyan cursor-pointer"
+                    />
+                  </td>
+                )}
                 <td className="px-6 py-3">
                   <span
                     className={`font-mono font-bold text-xs ${
@@ -118,7 +208,12 @@ export default function CompsTable({ comps }: { comps: Comp[] }) {
                   </span>
                 </td>
                 <td className="px-4 py-3">
-                  <div className="font-bold text-white">{comp.address}</div>
+                  <div
+                    className={`font-bold text-white ${onViewDetail ? "cursor-pointer hover:text-neon-cyan transition-colors" : ""}`}
+                    onClick={() => onViewDetail?.(comp)}
+                  >
+                    {comp.address}
+                  </div>
                   <div className="text-[11px] text-gray-500">
                     {comp.city}, {comp.state} {comp.zip}
                   </div>
@@ -135,6 +230,11 @@ export default function CompsTable({ comps }: { comps: Comp[] }) {
                 <td className="text-right px-4 py-3">
                   <span className="font-mono font-bold text-neon-green">
                     ${comp.rentPrice.toLocaleString()}
+                  </span>
+                </td>
+                <td className="text-right px-4 py-3">
+                  <span className="font-mono text-neon-orange text-xs">
+                    ${(comp.rentPrice / comp.sqft).toFixed(2)}
                   </span>
                 </td>
                 <td className="text-right px-4 py-3 font-mono text-gray-400 text-xs">
